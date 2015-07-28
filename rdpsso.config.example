@@ -1,0 +1,5 @@
+[
+    {rdpsso, [
+        {credentials, {<<"ADDRESS">>, <<"DOMAIN">>, <<"USERNAME">>, <<"PASSWORD">>}}
+    ]}
+].

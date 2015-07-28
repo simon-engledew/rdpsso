@@ -1,0 +1,13 @@
+{application, rdpsso,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  rdp_proto
+                 ]},
+  {mod, {rdpsso_app, []}},
+  {env, []}
+ ]}.

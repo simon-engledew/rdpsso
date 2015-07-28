@@ -1,0 +1,1 @@
+-record(session, {host, port, user, password, domain}).

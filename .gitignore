@@ -1,0 +1,11 @@
+.rebar
+erl_crash.dump
+rdpsso.config
+log
+ebin
+deps
+*.sublime-workspace
+*.key
+*.pem
+*.csr
+*.crt
