@@ -9,8 +9,16 @@
 %% Application callbacks
 %% ===================================================================
 
+ensure_file(Path) ->
+    case filelib:is_regular(Path) of
+        false -> erlang:error({notfound, Path});
+        _ -> {ok}
+    end.
+
 start(_StartType, _StartArgs) ->
-    rdp_server_sup:start_link(3000, frontend).
+    ensure_file("cert/server.key"),
+    ensure_file("cert/server.crt"),
+    rdp_server_sup:start_link(3389, frontend).
 
 stop(_State) ->
     ok.

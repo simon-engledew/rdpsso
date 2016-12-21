@@ -76,10 +76,12 @@ init([Srv = {P, _}, Address, Port]) when is_pid(P) ->
     init([Srv, Address, Port, OrigCr]);
 
 init([Srv, Address, Port, OrigCr]) ->
+    error_logger:info_msg("connecting to ~p", [Address]),
     random:seed(os:timestamp()),
     #x224_cr{src = Us} = OrigCr,
     case gen_tcp:connect(Address, Port, [binary, {active, once}, {packet, raw}, {nodelay, true}], 2000) of
         {ok, Sock} ->
+            error_logger:info_msg("connected to ~p", [Address]),
             Cr = OrigCr#x224_cr{rdp_protocols = [ssl]},
             {ok, CrData} = x224:encode(Cr),
             {ok, Packet} = tpkt:encode(CrData),
@@ -87,6 +89,8 @@ init([Srv, Address, Port, OrigCr]) ->
             {ok, initiation, #data{addr = Address, port = Port, server = Srv, sock = Sock, usref = Us, origcr = OrigCr}};
 
         {error, Reason} ->
+            error_logger:error_msg("failed to connect to ~p: ~p", [Address, Reason]),
+
             {stop, Reason}
     end.
 
@@ -94,7 +98,7 @@ initiation({pdu, #x224_cc{class = 0, dst = UsRef, rdp_status = error, rdp_error 
         #data{addr = _Address, usref = UsRef} = Data) ->
     {stop, no_ssl, Data};
 
-initiation({pdu, #x224_cc{class = 0, dst = UsRef, rdp_status = ok} = Pkt}, #data{usref = UsRef, sock = Sock, server = Srv, addr = _Address} = Data) ->
+initiation({pdu, #x224_cc{class = 0, dst = UsRef, rdp_status = ok} = Pkt}, #data{usref = UsRef, sock = Sock, server = Srv, addr = Address} = Data) ->
     #x224_cc{src = ThemRef, rdp_selected = Selected} = Pkt,
 
     HasSsl = lists:member(ssl, Selected),
@@ -103,6 +107,8 @@ initiation({pdu, #x224_cc{class = 0, dst = UsRef, rdp_status = ok} = Pkt}, #data
         inet:setopts(Sock, [{packet, raw}]),
         {ok, SslSock} = ssl:connect(Sock, [{verify, verify_none}]),
         ok = ssl:setopts(SslSock, [binary, {active, true}, {nodelay, true}]),
+
+        error_logger:info_msg("Establishing SSL connection to ~p", [Address]),
 
         case Srv of
             P when is_pid(P) ->
@@ -113,6 +119,7 @@ initiation({pdu, #x224_cc{class = 0, dst = UsRef, rdp_status = ok} = Pkt}, #data
 
         {next_state, proxy_intercept, Data#data{sslsock = SslSock, themref = ThemRef}};
     true ->
+        error_logger:warning_msg("Disconnecting from ~p as SSL is not enabled", [Address]),
         gen_tcp:close(Sock),
         {stop, no_ssl, Data}
     end.

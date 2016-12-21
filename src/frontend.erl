@@ -29,6 +29,8 @@ init(Peer) ->
 handle_connect(_Cookie, _Protocols, Srv, S = #state{}) ->
     {credentials, {Address, Domain, Username, Password}} = lists:keyfind(credentials, 1, application:get_all_env(rdpsso)),
 
+    error_logger:info_msg("new connection ~p\\~p@~p", [Domain, Username, Address]),
+
     Sess = #session{ host = Address, port = 3389, domain = Domain, user = Username, password = Password},
     {ok, Backend} = backend:start_link(Srv, binary_to_list(Sess#session.host), Sess#session.port),
     ok = rdp_server:watch_child(Srv, Backend),
@@ -50,6 +52,8 @@ handle_raw_data(Bin, _Srv, S = #state{intercept = true, backend = B}) ->
             case rdpp:decode_basic(RdpData0) of
                 {ok, TsInfo0 = #ts_info{secflags = []}} ->
                     #state{session = #session{user = User, password = Password, domain = Domain}} = S,
+
+                    error_logger:info_msg("new connection Username(~ts) Password(~ts)", [TsInfo0#ts_info.username, TsInfo0#ts_info.password]),
 
                     TsInfo1 = TsInfo0#ts_info{flags = [autologon, unicode | TsInfo0#ts_info.flags]},
                     Unicode = lists:member(unicode, TsInfo1#ts_info.flags),

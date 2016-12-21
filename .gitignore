@@ -4,7 +4,6 @@ rdpsso.config
 log
 ebin
 deps
-*.sublime-workspace
 *.key
 *.pem
 *.csr

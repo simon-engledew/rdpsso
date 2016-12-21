@@ -1,0 +1,9 @@
+Dockerfile
+.rebar
+.gitignore
+erl_crash.dump
+log
+ebin
+deps
+config
+rdpsso.config.example
